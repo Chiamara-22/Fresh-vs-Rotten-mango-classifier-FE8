@@ -37,7 +37,7 @@ st.markdown("""
 }
 
 .result-box{
-    padding:20px;
+    padding:18px;
     border-radius:15px;
     text-align:center;
     font-size:24px;
@@ -45,20 +45,20 @@ st.markdown("""
 }
 
 div[data-testid="stMetric"]{
-    background:white;
+    background-color:white;
     padding:15px;
     border-radius:12px;
     border:1px solid #ddd;
-    box-shadow:0 2px 8px rgba(0,0,0,.08);
+    box-shadow:0 2px 8px rgba(0,0,0,0.08);
 }
 
 .stButton>button{
     width:100%;
     height:50px;
+    font-size:18px;
     border-radius:12px;
     background:#2E7D32;
     color:white;
-    font-size:18px;
 }
 
 .stButton>button:hover{
@@ -79,23 +79,19 @@ def load_model():
 model = load_model()
 
 # --------------------------
-# SETTINGS
+# CLASS NAMES
+# --------------------------
+class_names = [
+    "Fresh Mango",
+    "Rotten Mango"
+]
+
+# --------------------------
+# IMAGE PREPROCESSING
 # --------------------------
 IMG_SIZE = (160, 160)
 
-CONFIDENCE_THRESHOLD = st.sidebar.slider(
-    "Confidence Threshold",
-    min_value=0.50,
-    max_value=0.99,
-    value=0.80,
-    step=0.01
-)
-
-# --------------------------
-# PREPROCESS IMAGE
-# --------------------------
 def preprocess_image(image):
-
     image = image.resize(IMG_SIZE)
     image = np.array(image).astype(np.float32)
 
@@ -103,22 +99,20 @@ def preprocess_image(image):
         image = image[:, :, :3]
 
     image /= 255.0
-
     image = np.expand_dims(image, axis=0)
 
     return image
-
 
 # --------------------------
 # HEADER
 # --------------------------
 st.markdown(
-    '<div class="title"> Mango Freshness Classifier</div>',
+    '<div class="title">🥭 Mango Freshness Classifier</div>',
     unsafe_allow_html=True
 )
 
 st.markdown(
-    '<div class="subtitle">Upload a mango image and let AI determine whether it is fresh or rotten.</div>',
+    '<div class="subtitle">Upload a mango image and let AI determine whether it is Fresh or Rotten.</div>',
     unsafe_allow_html=True
 )
 
@@ -130,7 +124,7 @@ uploaded_file = st.file_uploader(
     type=["jpg", "jpeg", "png"]
 )
 
-if uploaded_file is not None:
+if uploaded_file:
 
     image = Image.open(uploaded_file).convert("RGB")
 
@@ -142,64 +136,54 @@ if uploaded_file is not None:
 
     st.write("")
 
-    if st.button("🔍 Classify Mango"):
+    if st.button(" Classify Mango"):
 
         with st.spinner("Analyzing image..."):
 
             processed = preprocess_image(image)
 
-            # Sigmoid prediction
-            prediction = float(model.predict(processed, verbose=0)[0][0])
-
-        # ----------------------------------------
-        # Classes:
-        # 0 -> Fresh
-        # 1 -> Rotten
-        # ----------------------------------------
-
-        rotten_prob = prediction
-        fresh_prob = 1 - prediction
-
-        confidence = max(fresh_prob, rotten_prob)
-
-        if confidence < CONFIDENCE_THRESHOLD:
-            predicted_class = "Not Sure"
-
-        elif fresh_prob > rotten_prob:
-            predicted_class = "Fresh Mango"
-
-        else:
-            predicted_class = "Rotten Mango"
+            prediction = model.predict(processed, verbose=0)[0]
 
         st.divider()
+
+        # --------------------------------
+        # SOFTMAX MODEL (2 OUTPUTS)
+        # --------------------------------
+        if len(prediction) == 2:
+
+            fresh_prob = float(prediction[0])
+            rotten_prob = float(prediction[1])
+
+            predicted_index = np.argmax(prediction)
+            predicted_class = class_names[predicted_index]
+            confidence = float(prediction[predicted_index])
+
+        # --------------------------------
+        # SIGMOID MODEL (1 OUTPUT)
+        # --------------------------------
+        else:
+
+            rotten_prob = float(prediction[0])
+            fresh_prob = 1 - rotten_prob
+
+            if fresh_prob > rotten_prob:
+                predicted_class = "Fresh Mango"
+                confidence = fresh_prob
+            else:
+                predicted_class = "Rotten Mango"
+                confidence = rotten_prob
 
         # --------------------------
         # RESULT
         # --------------------------
-
         if predicted_class == "Fresh Mango":
 
             st.markdown(
                 f"""
-                <div class="result-box"
-                style="background:#E8F5E9;color:#1B5E20;">
-                Fresh Mango
+                <div class="result-box" style="background:#E8F5E9;color:#1B5E20;">
+                ✅ Fresh Mango
                 <br><br>
-                Confidence: <b>{confidence*100:.2f}%</b>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-        elif predicted_class == "Rotten Mango":
-
-            st.markdown(
-                f"""
-                <div class="result-box"
-                style="background:#FFEBEE;color:#C62828;">
-                 Rotten Mango
-                <br><br>
-                Confidence: <b>{confidence*100:.2f}%</b>
+                Confidence: {confidence*100:.2f}%
                 </div>
                 """,
                 unsafe_allow_html=True
@@ -209,19 +193,13 @@ if uploaded_file is not None:
 
             st.markdown(
                 f"""
-                <div class="result-box"
-                style="background:#FFF8E1;color:#E65100;">
-                Not Sure
+                <div class="result-box" style="background:#FFEBEE;color:#C62828;">
+                ⚠️ Rotten Mango
                 <br><br>
-                Highest Confidence: <b>{confidence*100:.2f}%</b>
+                Confidence: {confidence*100:.2f}%
                 </div>
                 """,
                 unsafe_allow_html=True
-            )
-
-            st.info(
-                "The model is not confident enough to classify this image. "
-                "Try another image with better lighting, focus, or a clearer view of the mango."
             )
 
         st.write("")
@@ -229,7 +207,6 @@ if uploaded_file is not None:
         # --------------------------
         # PROBABILITIES
         # --------------------------
-
         st.subheader("Prediction Probabilities")
 
         col1, col2 = st.columns(2)
@@ -237,11 +214,11 @@ if uploaded_file is not None:
         with col1:
 
             st.metric(
-                "Fresh",
+                "🥭 Fresh",
                 f"{fresh_prob*100:.2f}%"
             )
 
-            st.progress(float(fresh_prob))
+            st.progress(fresh_prob)
 
         with col2:
 
@@ -250,17 +227,16 @@ if uploaded_file is not None:
                 f"{rotten_prob*100:.2f}%"
             )
 
-            st.progress(float(rotten_prob))
+            st.progress(rotten_prob)
 
         st.write("")
 
         # --------------------------
         # OVERALL CONFIDENCE
         # --------------------------
+        st.subheader(" Overall Confidence")
 
-        st.subheader("Overall Confidence")
-
-        st.progress(float(confidence))
+        st.progress(confidence)
 
         st.metric(
             "Model Confidence",
@@ -270,14 +246,4 @@ if uploaded_file is not None:
 # --------------------------
 # FOOTER
 # --------------------------
-
 st.markdown("---")
-
-st.markdown(
-"""
-<center>
-Made with ❤️ using Streamlit & TensorFlow
-</center>
-""",
-unsafe_allow_html=True
-)
