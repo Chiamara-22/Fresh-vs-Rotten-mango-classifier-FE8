@@ -146,12 +146,8 @@ with st.sidebar:
     st.markdown("### ⚙️ Model details")
     st.write(f"- Input size: {IMAGE_WIDTH}×{IMAGE_HEIGHT}")
     st.write("- Architecture: 3-block custom CNN")
-    st.write("- Output: sigmoid (binary)")
     st.markdown("---")
-    st.caption(
-        "⚠️ Predictions are only as reliable as the training data. "
-        "This is a lab/demo model, not a food-safety instrument."
-    )
+
 
 # ── Hero header ───────────────────────────────────────────────────────────
 st.markdown(
