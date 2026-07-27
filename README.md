@@ -1,5 +1,13 @@
 # Fresh-vs-Rotten-mango-classifier-FE8
 
+# CONTRIBUTORS:
+
+## UDEOZOR CHIAMARA ASSUMPTA - 22/EG/FE/637
+## SAM, DIVINE GODWIN - 23/EG/FE/647
+## FELIX, MIRIAM ANIEFIOK - 22/EG/FE/007
+
+
+
 # 🥭 Mango Freshness Classification Using Deep Learning
 
 A Streamlit web application that uses a Convolutional Neural Network (CNN) to classify mangoes as **Fresh** or **Rotten** from an uploaded image.
