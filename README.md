@@ -6,6 +6,7 @@
 ## SAM, DIVINE GODWIN - 22/EG/FE/647
 ## FELIX, MIRIAM ANIEFIOK - 23/EG/FE/007
 ## ESSIEN, EKEMINI SYLVANUS - 23/EG/FE/037
+## Etok, Samnuel George - 23/EG/FE/027
 
 
 # 🥭 Mango Freshness Classification Using Deep Learning
